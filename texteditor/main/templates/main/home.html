@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px;
+            background-color: #3c8ce7;
+            color: white;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .button-group {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .button-group button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3c8ce7;
+            color: white;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .button-group button:hover {
+            background-color: #2c7cd6;
+        }
+
+        #result {
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            min-height: 50px;
+            word-wrap: break-word;
+        }
+
+        .logout-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .logout-link button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #e74c3c;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .logout-link button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Text Editor, {{ user.username }}</h1>
+
+    <div class="container">
+        <form id="text-form" method="POST">
+            {% csrf_token %}
+            <textarea name="text" id="text" placeholder="Type your text here"></textarea>
+
+            <div class="button-group">
+                <button type="button" onclick="applyAction('bold')">Bold</button>
+                <button type="button" onclick="applyAction('italic')">Italic</button>
+                <button type="button" onclick="applyAction('capitalize')">Upper Case</button>
+                <button type="button" onclick="applyAction('lowercase')">Lower Case</button>
+                <button type="button" onclick="applyAction('titlecase')">Title Case</button>
+                <button type="button" onclick="applyAction('remove_whitespace')">Remove Whitespace</button>
+                <button type="button" onclick="translateToUrdu()">Translate to Urdu</button>
+                <button type="button" onclick="clearText()">Clear</button>
+            </div>
+
+        </form>
+
+        <p>Result:</p>
+        <div id="result"></div>
+
+        <div class="logout-link">
+            <button onclick="window.location.href='{% url 'logout' %}'">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        let appliedActions = [];  
+
+        function applyAction(action) {
+            const textarea = document.getElementById('text');
+            let text = textarea.value;
+            let selectedText = window.getSelection().toString();
+
+            if (selectedText) {
+                switch(action) {
+                    case 'bold':
+                        text = toggleBold(text, selectedText);
+                        break;
+                    case 'italic':
+                        text = toggleItalic(text, selectedText);
+                        break;
+                    case 'capitalize':
+                        text = toggleCapitalize(text, selectedText);
+                        break;
+                    case 'remove_whitespace':
+                        text = toggleRemoveWhitespace(text, selectedText);
+                        break;
+                    case 'lowercase':
+                        text = toggleLowercase(text, selectedText);
+                        break;
+                    case 'titlecase':
+                        text = toggleTitleCase(text, selectedText);
+                        break;
+                }
+            } else {
+                switch(action) {
+                    case 'bold':
+                        text = toggleBold(text);
+                        break;
+                    case 'italic':
+                        text = toggleItalic(text);
+                        break;
+                    case 'capitalize':
+                        text = toggleCapitalize(text);
+                        break;
+                    case 'remove_whitespace':
+                        text = toggleRemoveWhitespace(text);
+                        break;
+                    case 'lowercase':
+                        text = toggleLowercase(text);
+                        break;
+                    case 'titlecase':
+                        text = toggleTitleCase(text);
+                        break;
+                }
+            }
+
+            document.getElementById('result').innerHTML = text;
+            textarea.value = text;
+        }
+
+        function toggleBold(text, selectedText = "") {
+            if (selectedText) {
+                return text.replace(selectedText, `<b>${selectedText}</b>`);
+            } else {
+                return text.includes('<b>') ? text.replace(/<b>(.*?)<\/b>/g, '$1') : `<b>${text}</b>`;
+            }
+        }
+
+        function toggleItalic(text, selectedText = "") {
+            if (selectedText) {
+                return text.replace(selectedText, `<i>${selectedText}</i>`);
+            } else {
+                return text.includes('<i>') ? text.replace(/<i>(.*?)<\/i>/g, '$1') : `<i>${text}</i>`;
+            }
+        }
+
+        function toggleCapitalize(text, selectedText = "") {
+            if (selectedText) {
+                return selectedText === selectedText.toUpperCase() ? selectedText.toLowerCase() : selectedText.toUpperCase();
+            } else {
+                return text === text.toUpperCase() ? text.toLowerCase() : text.toUpperCase();
+            }
+        }
+
+        function toggleRemoveWhitespace(text, selectedText = "") {
+            if (selectedText) {
+                return selectedText.replace(/\s+/g, '');
+            } else {
+                return text.replace(/\s+/g, '');
+            }
+        }
+
+        function toggleLowercase(text, selectedText = "") {
+            if (selectedText) {
+                return selectedText.toLowerCase();
+            } else {
+                return text.toLowerCase();
+            }
+        }
+
+        function toggleTitleCase(text, selectedText = "") {
+            if (selectedText) {
+                return selectedText.replace(/\b(\w)/g, match => match.toUpperCase());
+            } else {
+                return text.replace(/\b(\w)/g, match => match.toUpperCase());
+            }
+        }
+
+        function translateToUrdu() {
+            const textarea = document.getElementById('text');
+            const text = textarea.value;
+            
+            fetch("/translate_to_urdu/", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ text: text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = data.result;
+                textarea.value = data.result;
+            });
+        }
+
+        function clearText() {
+            document.getElementById('text').value = '';
+            document.getElementById('result').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
